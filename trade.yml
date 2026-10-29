@@ -1,0 +1,32 @@
+name: kereskedo
+on:
+  schedule:
+    - cron: "*/15 * * * *"     # 15 percenként (a GitHub néha késik, a program ezt behozza)
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency:
+  group: kereskedo
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Ügynökök futtatása
+        env:
+          BINANCE_BASE: https://data-api.binance.vision
+        run: python kereskedo_ugynokok.py --once
+      - name: Állapot mentése
+        run: |
+          git config user.name "kereskedo-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add state.json equity.csv noise.csv dashboard_data.js
+          git diff --cached --quiet && exit 0
+          git commit -m "tick $(date -u +%FT%TZ)"
+          git pull --rebase -X theirs
+          git push

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="hu"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ügynök Pult</title>
+<style>
+:root{--bg:#070b14;--card:rgba(255,255,255,.045);--line:rgba(255,255,255,.09);--tx:#e8ecf5;--mut:#8b95ad;--up:#34d399;--dn:#fb7185;--ac:#ffb020}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--tx);font:15px/1.5 "Segoe UI",system-ui,sans-serif;
+background:radial-gradient(900px 500px at 85% -10%,rgba(255,176,32,.14),transparent 60%),radial-gradient(800px 500px at -10% 10%,rgba(96,165,250,.14),transparent 60%),var(--bg)}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:22px}
+h1{margin:0;font-size:26px;letter-spacing:.3px}h1 span{background:linear-gradient(90deg,#ffb020,#fb7185);-webkit-background-clip:text;color:transparent}
+.sub{color:var(--mut);font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--line);border-radius:99px;background:var(--card);font-size:13px;color:var(--mut)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--up);box-shadow:0 0 10px var(--up);animation:p 2s infinite}.dot.old{background:var(--dn);box-shadow:0 0 10px var(--dn);animation:none}
+@keyframes p{50%{opacity:.35}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;backdrop-filter:blur(10px)}
+.k .l{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:1.2px}.k .v{font-size:28px;font-weight:700;margin-top:4px}.k .s{color:var(--mut);font-size:13px}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.chartbox{margin-bottom:16px}.ch{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:8px}
+.ch b{font-size:16px}.leg{display:flex;flex-wrap:wrap;gap:8px}
+.lg{cursor:pointer;display:flex;align-items:center;gap:7px;padding:4px 11px;border:1px solid var(--line);border-radius:99px;font-size:12.5px;user-select:none}
+.lg i{width:10px;height:10px;border-radius:50%}.lg.off{opacity:.35}
+#chart{position:relative}svg{width:100%;height:auto;display:block}
+#tip{position:absolute;pointer-events:none;background:rgba(10,14,26,.95);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:12.5px;display:none;min-width:200px;z-index:5}
+#tip div{display:flex;justify-content:space-between;gap:14px}
+table{width:100%;border-collapse:collapse}th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:1px;text-align:right;padding:8px 10px}
+td{padding:11px 10px;text-align:right;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}th:nth-child(2),td:nth-child(2){text-align:left}
+.nm{display:flex;align-items:center;gap:9px;font-weight:600}.nm i{width:11px;height:11px;border-radius:50%}
+.rk{color:var(--mut);width:34px;text-align:left}.bar{height:5px;border-radius:9px;background:rgba(255,255,255,.07);margin-top:6px;overflow:hidden}.bar b{display:block;height:100%;border-radius:9px}
+.tag{font-size:11px;padding:2px 8px;border-radius:99px;background:rgba(255,176,32,.15);color:var(--ac);margin-left:6px}
+.note{color:var(--mut);font-size:12.5px;margin-top:14px;text-align:center}
+#msg{display:none;text-align:center;padding:60px 20px;color:var(--mut)}
+.live{height:3px;border-radius:9px;background:rgba(255,255,255,.06);overflow:hidden;margin:-10px 0 16px;position:relative}
+.live::after{content:"";position:absolute;inset:0 auto 0 0;width:30%;border-radius:9px;background:linear-gradient(90deg,transparent,var(--ac),var(--up),transparent);animation:sweep 1.6s linear infinite}
+.live.old::after{background:linear-gradient(90deg,transparent,var(--dn),transparent);animation-duration:4s}
+@keyframes sweep{from{transform:translateX(-100%)}to{transform:translateX(340%)}}
+.tick{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.tk{flex:1;min-width:170px;padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);display:flex;justify-content:space-between;align-items:baseline;transition:background .6s}
+.tk b{font-size:13px;color:var(--mut)}.tk span{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.tk.u{background:rgba(52,211,153,.22);transition:none}.tk.d{background:rgba(251,113,133,.22);transition:none}
+.mut{color:var(--mut)}
+.pillm{font-variant-numeric:tabular-nums}
+@keyframes ring{0%{r:4;opacity:.9}100%{r:14;opacity:0}}
+.pulse{animation:ring 1.4s ease-out infinite}
+@media(max-width:720px){.hm{display:none}}
+</style></head><body><div class="wrap">
+<header><div><h1>Ügynök <span>Pult</span></h1><div class="sub">Papír-kereskedés · virtuális pénz · BTC · ETH · SOL</div></div>
+<div class="pill"><span class="dot" id="dot"></span><span id="upd" class="pillm">betöltés…</span></div></header>
+<div class="live" id="live"></div>
+<div class="tick" id="tick"></div>
+<div id="msg" class="card"><b>Még nincs adat.</b><br>Indítsd el a kereskedő programot ugyanebben a mappában, ez az oldal utána magától frissül.</div>
+<main id="main" style="display:none">
+<div class="kpis" id="kpis"></div>
+<div class="card chartbox"><div class="ch"><b>Egyenleg alakulása</b><div class="leg" id="leg"></div></div><div id="chart"></div></div>
+<div class="card"><b>Ranglista</b><table><thead><tr><th></th><th>Ügynök</th><th>Egyenleg</th><th>Hozam</th><th>Élő óta</th><th class="hm">Sharpe</th><th class="hm">Zajsávhoz képest</th><th class="hm">Max esés</th><th class="hm">Ügylet</th><th class="hm">Jutalék</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="note">Ez papírpénz. A múltbeli eredmény nem ígér jövőbeli nyereséget. Az „Élő óta” oszlop számít igazán.</div>
+</main></div>
+<script>
+const COL={"TANULÓ (Q-learning)":"#ffb020","Trendkövető":"#34d399","Kitörés":"#60a5fa","Visszatérő (mean-rev.)":"#c084fc","Véletlen (kontroll)":"#94a3b8","Vásárol és tart":"#f472b6"};
+const off=new Set();let D=null;
+const $=id=>document.getElementById(id);
+const f0=x=>x.toLocaleString("hu-HU",{maximumFractionDigits:0});
+const pc=x=>x==null?"–":`<span class="${x>=0?"up":"dn"}">${x>=0?"+":""}${x.toFixed(1)}%</span>`;
+const fd=t=>t>1e11?new Date(t).toLocaleString("hu-HU",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}):"#"+t;
+function load(){const s=document.createElement("script");s.src="dashboard_data.js?"+Date.now();
+ s.onload=()=>{D=window.DATA;s.remove();render()};s.onerror=()=>{s.remove();if(!D){$("msg").style.display="block";$("upd").textContent="nincs adat"}};document.body.appendChild(s)}
+const ver=a=>{if(!D.noise||a.z==null||D.live_n<200)return`<span class="mut">gyűjtés (${D.live_n}/200)</span>`;
+ return a.z>2?'<span class="up">sáv felett</span>':a.z<-2?'<span class="dn">sáv alatt</span>':'<span class="mut">zajsávban</span>'};
+function render(){
+ $("msg").style.display="none";$("main").style.display="block";
+ status();
+ $("tick").innerHTML=Object.entries(D.prices).map(([k,v])=>`<div class="tk" id="tk_${k}"><b>${k.replace("USDT","")}/USDT</b><span>${v.toLocaleString("hu-HU",{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>`).join("");
+ Object.entries(D.prices).forEach(([k,v])=>{if(prev[k]!=null&&v!==prev[k]){const e=$("tk_"+k);e.classList.add(v>prev[k]?"u":"d");setTimeout(()=>e.classList.remove("u","d"),50)}prev[k]=v});
+ const A=[...D.agents].sort((a,b)=>b.equity-a.equity),best=A[0],B=D.bench,L=D.learner;
+ const learner=D.agents.find(a=>a.name.startsWith("TAN"));
+ $("kpis").innerHTML=`
+ <div class="card k"><div class="l">Éllovas</div><div class="v">${best.name.split(" (")[0]}</div><div class="s">${f0(best.equity)} USDT · ${pc(best.ret)}</div></div>
+ <div class="card k"><div class="l">Vásárol és tart</div><div class="v">${pc(B.ret)}</div><div class="s">a piac viszonyítási értéke</div></div>
+ <div class="card k"><div class="l">Tanuló ügynök</div><div class="v">${pc(learner.ret)}</div><div class="s">${f0(L.steps)} döntés · ${L.states} állapot · felfedezés ${(L.eps*100).toFixed(0)}%</div></div>
+ <div class="card k"><div class="l">Zajsáv (${D.noise?D.noise.n:30} véletlen ügynök)</div><div class="v">${D.noise?pc(D.noise.mean):"–"}</div><div class="s">${D.noise?`90%-uk ${D.noise.p5.toFixed(1)}% és ${D.noise.p95.toFixed(1)}% közé esik`:"még nincs mérés"} · ${D.live_n} gyertya</div></div>`;
+ const mx=Math.max(...A.map(a=>Math.abs(a.ret)),1);
+ $("rows").innerHTML=A.map((a,i)=>`<tr><td class="rk">${i+1}.</td><td><div class="nm"><i style="background:${COL[a.name]}"></i>${a.name}${i==0?'<span class="tag">élen</span>':""}</div><div class="bar"><b style="width:${Math.min(100,Math.abs(a.ret)/mx*100)}%;background:${a.ret>=0?"var(--up)":"var(--dn)"}"></b></div></td>
+ <td>${f0(a.equity)}</td><td>${pc(a.ret)}</td><td>${pc(a.live)}</td><td class="hm">${a.sharpe==null?"–":a.sharpe.toFixed(1)}</td><td class="hm">${ver(a)}</td><td class="hm">${a.dd.toFixed(1)}%</td><td class="hm">${a.trades}</td><td class="hm">${f0(a.fees)}</td></tr>`).join("")+
+ `<tr><td class="rk"></td><td><div class="nm"><i style="background:${COL["Vásárol és tart"]}"></i>Vásárol és tart <span class="tag">viszonyítás</span></div></td><td>${f0(B.equity)}</td><td>${pc(B.ret)}</td><td>${pc(B.live)}</td><td class="hm">–</td><td class="hm">–</td><td class="hm">–</td><td class="hm">–</td><td class="hm">–</td></tr>`;
+ const names=[...A.map(a=>a.name),"Vásárol és tart","zaj"];
+ $("leg").innerHTML=names.map(n=>`<div class="lg ${off.has(n)?"off":""}" data-n="${n}"><i style="background:${n==="zaj"?"#64748b":COL[n]}"></i>${n==="zaj"?"Véletlen-sáv":n.split(" (")[0]}</div>`).join("");
+ document.querySelectorAll(".lg").forEach(e=>e.onclick=()=>{off.has(e.dataset.n)?off.delete(e.dataset.n):off.add(e.dataset.n);render()});
+ if(!hov)chart()}
+function chart(){
+ const S=D.series,n=S.t.length,W=1000,H=360,p={l:62,r:14,t:12,b:26};
+ const key=x=>x==="Vásárol és tart"?"buyhold":x,names=Object.keys(COL).filter(x=>!off.has(x)&&S[key(x)]);
+ let lo=1e18,hi=-1e18;names.forEach(x=>S[key(x)].forEach(v=>{lo=Math.min(lo,v);hi=Math.max(hi,v)}));
+ const NL=S.noise_lo,NH=S.noise_hi,showB=NL&&!off.has('zaj');
+ if(showB)for(let i=0;i<n;i++)if(NL[i]!=null){lo=Math.min(lo,NL[i]);hi=Math.max(hi,NH[i])}
+ if(lo>=hi){lo-=1;hi+=1}const pad=(hi-lo)*.08;lo-=pad;hi+=pad;
+ const X=i=>p.l+i/(n-1||1)*(W-p.l-p.r),Y=v=>p.t+(1-(v-lo)/(hi-lo))*(H-p.t-p.b);
+ let g="";for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4,y=Y(v);g+=`<line x1="${p.l}" x2="${W-p.r}" y1="${y}" y2="${y}" stroke="rgba(255,255,255,.07)"/><text x="${p.l-8}" y="${y+4}" text-anchor="end" fill="#8b95ad" font-size="11">${f0(v)}</text>`}
+ g+=`<line x1="${p.l}" x2="${W-p.r}" y1="${Y(10000)}" y2="${Y(10000)}" stroke="rgba(255,255,255,.25)" stroke-dasharray="4 5"/>`;
+ [0,.5,1].forEach(r=>{const i=Math.round((n-1)*r);g+=`<text x="${X(i)}" y="${H-6}" text-anchor="${r==0?"start":r==1?"end":"middle"}" fill="#8b95ad" font-size="11">${fd(S.t[i])}</text>`});
+ let band="";
+ if(showB){const ix=[];for(let i=0;i<n;i++)if(NL[i]!=null)ix.push(i);
+  if(ix.length>1){const u=ix.map(i=>X(i).toFixed(1)+" "+Y(NH[i]).toFixed(1)),d=[...ix].reverse().map(i=>X(i).toFixed(1)+" "+Y(NL[i]).toFixed(1));
+   band=`<path d="M${u.join("L")}L${d.join("L")}Z" fill="rgba(148,163,184,.18)"/>`}}
+ const step=Math.max(1,Math.floor(n/400));
+ const paths=names.map(x=>{const a=S[key(x)];let d="";for(let i=0;i<n;i+=step)d+=(d?"L":"M")+X(i).toFixed(1)+" "+Y(a[i]).toFixed(1);d+="L"+X(n-1).toFixed(1)+" "+Y(a[n-1]).toFixed(1);
+  return `<path d="${d}" fill="none" stroke="${COL[x]}" stroke-width="${x.startsWith("TAN")?3:2}" stroke-linejoin="round" opacity="${x.startsWith("TAN")?1:.85}"/>`}).join("");
+ $("chart").innerHTML=`<svg viewBox="0 0 ${W} ${H}">${g}${band}${paths}${names.map(x=>`<circle class="pulse" cx="${X(n-1).toFixed(1)}" cy="${Y(S[key(x)][n-1]).toFixed(1)}" r="4" fill="none" stroke="${COL[x]}" stroke-width="2"/><circle cx="${X(n-1).toFixed(1)}" cy="${Y(S[key(x)][n-1]).toFixed(1)}" r="3.5" fill="${COL[x]}"/>`).join("")}<line id="cur" y1="${p.t}" y2="${H-p.b}" stroke="rgba(255,255,255,.4)" style="display:none"/></svg><div id="tip"></div>`;
+ const svg=$("chart").querySelector("svg"),tip=$("tip"),cur=$("cur");
+ svg.onmousemove=e=>{const r=svg.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W;let i=Math.round((x-p.l)/(W-p.l-p.r)*(n-1));if(i<0||i>=n){return}
+  cur.setAttribute("x1",X(i));cur.setAttribute("x2",X(i));cur.style.display="block";
+  tip.innerHTML=`<b>${fd(S.t[i])}</b>`+names.map(k=>[k,S[key(k)][i]]).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div><span style="color:${COL[k]}">● ${k.split(" (")[0]}</span><span>${f0(v)}</span></div>`).join("");
+  if(showB&&NL[i]!=null)tip.innerHTML+=`<div><span style="color:#94a3b8">▒ véletlen-sáv</span><span>${f0(NL[i])}–${f0(NH[i])}</span></div>`;
+  tip.style.display="block";const left=e.clientX-r.left;tip.style.left=(left>r.width/2?left-tip.offsetWidth-14:left+14)+"px";tip.style.top="10px"};
+ svg.onmouseenter=()=>hov=true;svg.onmouseleave=()=>{hov=false;tip.style.display="none";cur.style.display="none"}}
+let hov=false,prev={},liveTs=0;const D_REFRESH=3000;
+const TICKMAX=25;
+function status(){if(!D)return;
+ const age=(Date.now()-D.ts)/1000,once=D.mode==="once",lim=once?2*D.sec+300:TICKMAX,old=age>lim;
+ const cd=D.next_candle?Math.max(0,Math.round((D.next_candle-Date.now())/1000)):null;
+ const brLive=once&&Date.now()-liveTs<15000;
+ $("dot").className="dot"+(old?" old":"");$("live").className="live"+(old?" old":"");
+ const mins=Math.round(age/60);
+ $("upd").textContent=old?"A KERESKEDŐ NEM FUTÓ · utolsó adat "+(mins<120?mins+" perce":Math.round(mins/60)+" órája")
+  :once?(brLive?"ÉLŐ ár · ":"ár: elavulhat · ")+"ügynökök utoljára "+mins+" perce döntöttek"
+  :(D.feed==="elo"?"ÉLŐ · ":"GYERTYA · ")+Math.round(age)+" mp-e"+(cd!=null?" · következő gyertya "+Math.floor(cd/60)+":"+String(cd%60).padStart(2,"0"):"")}
+// statikus (felhős) módban a böngésző maga kér élő árat, és újraszámolja az egyenlegeket
+function patch(P){
+ const S=D.series,n=S.t.length-1,ok=S.t[n]>1e11;
+ D.prices=P;
+ D.agents.forEach(a=>{const eq=a.cash+Object.entries(a.qty).reduce((s,[k,q])=>s+q*P[k],0);
+  a.equity=eq;a.ret=(eq/D.start-1)*100;if(a.mark)a.live=(eq/a.mark-1)*100;
+  if(ok&&S[a.name])S[a.name][n]=eq});
+ const b=D.start*Object.keys(P).reduce((s,k)=>s+P[k]/D.p0[k],0)/Object.keys(P).length;
+ D.bench.equity=b;D.bench.ret=(b/D.start-1)*100;if(D.bench.mark)D.bench.live=(b/D.bench.mark-1)*100;
+ if(ok){S.t[n]=Date.now();S.buyhold[n]=b}}
+async function livePrices(){
+ if(!D||D.mode!=="once")return;
+ try{const syms=Object.keys(D.prices),r=await fetch("https://data-api.binance.vision/api/v3/ticker/price?symbols="+encodeURIComponent(JSON.stringify(syms)));
+  const j=await r.json(),P={};j.forEach(x=>P[x.symbol]=parseFloat(x.price));
+  if(Object.keys(P).length===syms.length){patch(P);liveTs=Date.now();render()}}catch(e){}}
+load();setInterval(load,D_REFRESH);setInterval(status,1000);setInterval(livePrices,5000);
+</script></body></html>
